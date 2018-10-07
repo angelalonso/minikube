@@ -1,10 +1,14 @@
-# -*- mode: ruby -*-                                                                                                                                                                                               
+# -*- mode: ruby -*-
 # vi: set ft=ruby :
+
+# Based off https://medium.com/@lizrice/kubernetes-in-vagrant-with-kubeadm-21979ded6c63
+#   and https://github.com/mcwienczek/coreos-kubernetes/blob/master/multi-node/vagrant/Vagrantfile
+# This script to install Kubernetes will get executed after we have provisioned the box 
 
 $script = <<-SCRIPT
 
 # Install kubernetes
-apt-get update && apt-get install -y apt-transport-https curl ifconfig
+apt-get update && apt-get install -y apt-transport-https
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
 deb http://apt.kubernetes.io/ kubernetes-xenial main
@@ -37,33 +41,12 @@ chown $(id -u vagrant):$(id -g vagrant) /home/vagrant/.kube/config
 
 SCRIPT
 
-Vagrant.configure(2) do |config|
-  config.vm.box = "debian/contrib-stretch64"
-  config.vm.box_version = "=9.4.0"
-  # Disabled VirtualBox Guest updates
-  if Vagrant.has_plugin?("vagrant-vbguest")
-    config.vbguest.auto_update = false
-  end
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-16.04"  
+  config.vm.network "private_network", type: "dhcp"
   config.vm.hostname = "master1"
   config.vm.define vm_name = "master1"
-
-  # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
-  # This is the docker network
-  config.vm.network "private_network", ip: "10.10.0.2", auto_config: false
-
-  config.vm.provider :virtualbox do |vb|
-    # Change this matching the power of your machine
-    vb.memory = 1024
-    # vb.cpus = 1
-
-    # Set the vboxnet interface to promiscous mode so that the docker veth
-    # interfaces are reachable
-    vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
-    # Otherwise we get really slow DNS lookup on OSX (Changed DNS inside the machine)
-    vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
-  end
-
- 
+  config.vm.network "private_network", ip: "10.0.2.11"
+  config.vm.provision "docker"
   config.vm.provision "shell", inline: $script
 end
