@@ -1,0 +1,5 @@
+change hostname on all
+change IP on /etc/kubernetes/* (was 10.0.2.15)
+service kubelet stop
+clean folders, kill containers
+kubeadm init
