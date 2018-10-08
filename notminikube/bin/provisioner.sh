@@ -21,18 +21,15 @@ ssl() {
   cfssl version
 }
 
-kubectl() {
+get_kubectl() {
   echo "################## kubectl "
   wget --quiet "https://storage.googleapis.com/kubernetes-release/release/v1.10.1/bin/linux/amd64/kubectl" 2>/dev/null
-  echo "Downloaded"
   sudo chmod +x kubectl
   sudo mv kubectl /usr/local/bin
-  echo "Moved"
   kubectl version
-  echo "tested"
 }
 
-haproxy() {
+get_haproxy() {
   echo "################## haproxy "
   sudo apt-get install -y haproxy
   sudo cp $THISHOME/files/haproxy.cfg /etc/haproxy/haproxy.cfg
@@ -63,7 +60,7 @@ testfile(){
 
 update
 ssl
-kubectl
-haproxy
+get_kubectl
+get_haproxy
 tls
 testfile
