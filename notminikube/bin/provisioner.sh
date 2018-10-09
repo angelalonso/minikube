@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+#TODO:
+# change 10.0.2.15 on sed to use MASTER1IP instead
 THISHOME="/home/vagrant"
 
 export DEBIAN_FRONTEND=noninteractive
@@ -81,6 +83,22 @@ get_kubethings() {
 
 }
 
+get_etcd() {
+  echo "################## Etcd"
+  sudo mkdir -p /etc/etcd /var/lib/etcd
+  sudo mv $THISHOME/ca.pem $THISHOME/kubernetes.pem $THISHOME/kubernetes-key.pem /etc/etcd
+  wget --quiet https://github.com/coreos/etcd/releases/download/v3.3.9/etcd-v3.3.9-linux-amd64.tar.gz 2>/dev/null
+  sleep 1
+  tar xvzf etcd-v3.3.9-linux-amd64.tar.gz
+  sudo mv etcd-v3.3.9-linux-amd64/etcd* /usr/local/bin/
+  sudo sed 's/xx.xx.xx.xx/10.0.2.15/g' $THISHOME/files/etcd.service > /etc/systemd/system/etcd.service
+  sudo systemctl daemon-reload
+  sudo systemctl enable etcd
+  sudo systemctl start etcd
+  sleep 10
+  sudo systemctl status etcd --no-pager
+}
+
 testfile(){
   echo "#########################################################"
   echo "######### TEST"
@@ -95,4 +113,5 @@ get_haproxy
 tls
 get_docker
 get_kubethings
+get_etcd
 testfile
