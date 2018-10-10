@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 #TODO:
+# test kubeadm from scratch
 # change 10.0.2.15 on sed to use MASTER1IP instead
 THISHOME="/home/vagrant"
 
 export DEBIAN_FRONTEND=noninteractive
+HAPROXYIP="10.0.2.15"
 MASTER1IP="10.0.2.15"
 
 update() {
@@ -39,6 +41,7 @@ get_kubectl() {
 get_haproxy() {
   echo "################## haproxy "
   sudo apt-get install -y haproxy
+  sudo sed -i 's/ww.ww.ww.ww/10.0.2.15/g' $THISHOME/files/haproxy.cfg
   sudo sed 's/xx.xx.xx.xx/10.0.2.15/g' $THISHOME/files/haproxy.cfg > /etc/haproxy/haproxy.cfg
   sudo systemctl restart haproxy
 }
@@ -99,6 +102,26 @@ get_etcd() {
   sudo systemctl status etcd --no-pager
 }
 
+init_master() {
+  echo "################## Initializing Master"
+  sudo sed -i 's/ww.ww.ww.ww/10.0.2.15/g' $THISHOME/files/kubeadm_config.yaml 
+  sudo sed -i 's/xx.xx.xx.xx/10.0.2.15/g' $THISHOME/files/kubeadm_config.yaml 
+  sudo systemctl stop etcd
+  sudo rm -rf /var/lib/etcd/member
+  sudo kubeadm init --config=$THISHOME/files/kubeadm_config.yaml
+  #sudo scp -r /etc/kubernetes/pki sguyennet@10.10.40.91:~
+  su -l vagrant -c 'mkdir -p $HOME/.kube'
+  su -l vagrant -c 'sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config'
+  su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/.kube/config'
+  echo "DID SOME OTHER THINGS...see comments on script"
+  # modify endpoints to use port 6444 of haproxy
+  # install calico
+  #   kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
+  #   kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+  #...some other things
+
+}
+
 testfile(){
   echo "#########################################################"
   echo "######### TEST"
@@ -114,4 +137,5 @@ tls
 get_docker
 get_kubethings
 get_etcd
+init_master
 testfile

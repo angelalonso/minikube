@@ -1,0 +1,16 @@
+apiVersion: kubeadm.k8s.io/v1alpha2
+kind: MasterConfiguration
+api:
+  advertiseAddress: xx.xx.xx.xx
+etcd:
+  endpoints:
+  - https://xx.xx.xx.xx:2379
+  caFile: /etc/etcd/ca.pem
+  certFile: /etc/etcd/kubernetes.pem
+  keyFile: /etc/etcd/kubernetes-key.pem
+networking:
+  podSubnet: 10.30.0.0/24
+apiServerCertSANs:
+- ww.ww.ww.ww
+apiServerExtraArgs:
+  apiserver-count: "1"
