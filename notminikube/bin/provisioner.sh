@@ -8,6 +8,8 @@ export DEBIAN_FRONTEND=noninteractive
 CLUSTERCIDR="10.30.0.0/24"
 HAPROXYIP="10.0.2.15"
 MASTER1IP="10.0.2.15"
+MASTER2IP="10.0.2.16"
+MASTER3IP="10.0.2.17"
 
 K8SV="1.10.6"
 CALICOV="3.0"
@@ -20,6 +22,7 @@ update() {
   sudo apt-get install -y \
   apt-transport-https \
   curl \
+  net-tools \
   software-properties-common
 }
 
@@ -84,7 +87,7 @@ get_kubethings() {
   sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
   sudo sh -c 'echo "deb http://apt.kubernetes.io kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list'
   sudo apt-get update
-  sudo apt-get install -y kubelet kubeadm kubectl
+  sudo apt-get install -y kubelet=$K8SV-00 kubeadm=$K8SV-00 kubectl=$K8SV-00
   swapoff -a
   sed -i '/ swap / s/^/#/' /etc/fstab
 
@@ -110,8 +113,9 @@ init_master() {
   echo "################## Initializing Master"
   sudo sed -i 's/ww.ww.ww.ww/10.0.2.15/g' $VAGRANTHOME/files/kubeadm_config.yaml 
   sudo sed -i 's/xx.xx.xx.xx/10.0.2.15/g' $VAGRANTHOME/files/kubeadm_config.yaml 
-  sudo systemctl stop etcd
-  sudo rm -rf /var/lib/etcd/member
+  # NEEDED ON FUTURE VERSION 1.12
+  #sudo systemctl stop etcd
+  #sudo rm -rf /var/lib/etcd/member
   sudo kubeadm init --config=$VAGRANTHOME/files/kubeadm_config.yaml
   #sudo scp -r /etc/kubernetes/pki sguyennet@10.10.40.91:~
   su -l vagrant -c 'mkdir -p $HOME/.kube'
