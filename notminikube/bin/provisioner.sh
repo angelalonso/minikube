@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 #TODO:
+# remove authorized_keys from root user
+# Document README.md -> creation of keys
 VAGRANTHOME="/home/vagrant"
 
 export DEBIAN_FRONTEND=noninteractive
@@ -14,6 +16,18 @@ echo "##############################"
 
 K8SV="1.10.6"
 CALICOV="3.0"
+
+get_ssh() {
+  # You should run:
+  # ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f notminikube
+  echo "Getting our keys on the host"
+  mkdir -p $VAGRANTHOME/.ssh
+  mv $VAGRANTHOME/files/notminikube.pem $VAGRANTHOME/.ssh/id_rsa
+  cat $VAGRANTHOME/files/notminikube.pub > $VAGRANTHOME/.ssh/authorized_keys
+  su -l vagrant -c 'sudo chown -R $(id -u):$(id -g) /home/vagrant/.ssh'
+  sudo mkdir -p /root/.ssh
+  sudo sh -c "cat $VAGRANTHOME/files/notminikube.pub > /root/.ssh/authorized_keys"
+}
 
 update() {
   echo "################## update "
@@ -61,7 +75,6 @@ tls() {
     echo "# Generating CERTS"
     echo "## Certificate Authority"
     cfssl gencert -initca $VAGRANTHOME/files/ca-csr.json | cfssljson -bare ca
-    ls -la 
     echo "## Etcd Cluster"
     cfssl gencert \
       -ca=ca.pem \
@@ -70,11 +83,10 @@ tls() {
       -hostname=10.10.40.11,10.10.40.12,10.10.40.13,10.10.40.15,127.0.0.1,kubernetes.default \
       -profile=kubernetes $VAGRANTHOME/files/kubernetes-csr.json | \
       cfssljson -bare kubernetes
-    ls -la
   elif [ $THISMASTER -eq 2 ] || [ $THISMASTER -eq 3 ] ; then
     echo "# Copying CERTS"
     ls -lha
-    scp -o 'StrictHostKeyChecking no' vagrant@10.10.40.11:$VAGRANTHOME/*.pem $VAGRANTHOME
+    scp -o 'StrictHostKeyChecking no' -i $VAGRANTHOME/.ssh/id_rsa root@10.10.40.11:$VAGRANTHOME/*.pem $VAGRANTHOME
     ls -lha
   fi
 
@@ -122,6 +134,11 @@ get_etcd() {
 
 init_master() {
   echo "################## Initializing Master"
+  if [ $THISMASTER -eq 1 ] ; then
+    echo "Doing Master1"
+  elif [ $THISMASTER -eq 2 ] || [ $THISMASTER -eq 3 ] ; then
+    echo "Doing Master"$THISMASTER
+  fi
   sudo sed -i "s/ww.ww.ww.ww/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
   sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
   # NEEDED ON FUTURE VERSION 1.12
@@ -145,6 +162,7 @@ init_master() {
   rm $VAGRANTHOME/calico.yaml
 }
 
+get_ssh
 #update
 ssl
 #get_kubectl
