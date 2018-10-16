@@ -4,7 +4,9 @@ api:
   advertiseAddress: xx.xx.xx.xx
 etcd:
   endpoints:
-  - https://xx.xx.xx.xx:2379
+  - https://10.10.40.11:2379
+  - https://10.10.40.12:2379
+  - https://10.10.40.13:2379
   caFile: /etc/etcd/ca.pem
   certFile: /etc/etcd/kubernetes.pem
   keyFile: /etc/etcd/kubernetes-key.pem
@@ -13,4 +15,4 @@ networking:
 apiServerCertSANs:
 - ww.ww.ww.ww
 apiServerExtraArgs:
-  apiserver-count: "1"
+  apiserver-count: "3"

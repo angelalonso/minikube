@@ -16,11 +16,11 @@ ExecStart=/usr/local/bin/etcd \
   --peer-client-cert-auth \
   --client-cert-auth \
   --initial-advertise-peer-urls https://xx.xx.xx.xx:2380 \
-  --listen-peer-urls https://xx.xx.xx.xx:2380 \
-  --listen-client-urls https://xx.xx.xx.xx:2379,http://127.0.0.1:2379 \
+  --listen-peer-urls https://0.0.0.0:2380 \
+  --listen-client-urls https://0.0.0.0:2379 \
   --advertise-client-urls https://xx.xx.xx.xx:2379 \
   --initial-cluster-token etcd-cluster-0 \
-  --initial-cluster xx.xx.xx.xx=https://xx.xx.xx.xx:2380 \
+  --initial-cluster 10.10.40.11=https://10.10.40.11:2380,10.10.40.12=https://10.10.40.12:2380,10.10.40.13=https://10.10.40.13:2380 \
   --initial-cluster-state new \
   --data-dir=/var/lib/etcd
 Restart=on-failure

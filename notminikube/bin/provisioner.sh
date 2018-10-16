@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 #TODO:
-# test kubeadm from scratch
-# change 10.0.2.15 on sed to use MASTER1IP instead
 VAGRANTHOME="/home/vagrant"
 
 export DEBIAN_FRONTEND=noninteractive
 CLUSTERCIDR="10.30.0.0/24"
-HAPROXYIP="10.0.2.15"
-MASTER1IP="10.0.2.15"
-MASTER2IP="10.0.2.16"
-MASTER3IP="10.0.2.17"
+HAPROXYIP="10.10.40.15"
+THISMASTER=$(hostname | sed 's/master//g')
+MASTERIP=$(echo "10.10.40.1"$THISMASTER)
+
+echo "##############################"
+echo $MASTERIP
+echo "##############################"
 
 K8SV="1.10.6"
 CALICOV="3.0"
@@ -23,7 +24,8 @@ update() {
   apt-transport-https \
   curl \
   net-tools \
-  software-properties-common
+  software-properties-common \
+  vim
 }
 
 ssl() {
@@ -48,25 +50,34 @@ get_kubectl() {
 get_haproxy() {
   echo "################## haproxy "
   sudo apt-get install -y haproxy
-  sudo sed -i 's/ww.ww.ww.ww/10.0.2.15/g' $VAGRANTHOME/files/haproxy.cfg
-  sudo sed 's/xx.xx.xx.xx/10.0.2.15/g' $VAGRANTHOME/files/haproxy.cfg > /etc/haproxy/haproxy.cfg
+  sudo sed -i "s/ww.ww.ww.ww/$MASTERIP/g" $VAGRANTHOME/files/haproxy.cfg
+  sudo sed "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/haproxy.cfg > /etc/haproxy/haproxy.cfg
   sudo systemctl restart haproxy
 }
 
 tls() {
   echo "################## TLS "
-  echo "## Certificate Authority"
-  cfssl gencert -initca $VAGRANTHOME/files/ca-csr.json | cfssljson -bare ca
-  ls -la 
-  echo "## Etcd Cluster"
-  cfssl gencert \
-    -ca=ca.pem \
-    -ca-key=ca-key.pem \
-    -config=$VAGRANTHOME/files/ca-config.json \
-    -hostname=$MASTER1IP,127.0.0.1,kubernetes.default \
-    -profile=kubernetes $VAGRANTHOME/files/kubernetes-csr.json | \
-    cfssljson -bare kubernetes
-  ls -la
+  if [ $THISMASTER -eq 1 ]; then
+    echo "# Generating CERTS"
+    echo "## Certificate Authority"
+    cfssl gencert -initca $VAGRANTHOME/files/ca-csr.json | cfssljson -bare ca
+    ls -la 
+    echo "## Etcd Cluster"
+    cfssl gencert \
+      -ca=ca.pem \
+      -ca-key=ca-key.pem \
+      -config=$VAGRANTHOME/files/ca-config.json \
+      -hostname=10.10.40.11,10.10.40.12,10.10.40.13,10.10.40.15,127.0.0.1,kubernetes.default \
+      -profile=kubernetes $VAGRANTHOME/files/kubernetes-csr.json | \
+      cfssljson -bare kubernetes
+    ls -la
+  elif [ $THISMASTER -eq 2 ] || [ $THISMASTER -eq 3 ] ; then
+    echo "# Copying CERTS"
+    ls -lha
+    scp -o 'StrictHostKeyChecking no' vagrant@10.10.40.11:$VAGRANTHOME/*.pem $VAGRANTHOME
+    ls -lha
+  fi
+
   #scp ca.pem kubernetes.pem kubernetes-key.pem sguyennet@10.10.40.90:~
 }
 
@@ -87,7 +98,7 @@ get_kubethings() {
   sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
   sudo sh -c 'echo "deb http://apt.kubernetes.io kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list'
   sudo apt-get update
-  sudo apt-get install -y kubelet=$K8SV-00 kubeadm=$K8SV-00 kubectl=$K8SV-00
+  sudo apt-get install -y kubelet=$K8SV-00 kubeadm=$K8SV-00 kubectl=$K8SV-00 --allow-downgrades
   swapoff -a
   sed -i '/ swap / s/^/#/' /etc/fstab
 
@@ -101,7 +112,7 @@ get_etcd() {
   sleep 1
   tar xvzf etcd-v3.3.9-linux-amd64.tar.gz
   sudo mv etcd-v3.3.9-linux-amd64/etcd* /usr/local/bin/
-  sudo sed 's/xx.xx.xx.xx/10.0.2.15/g' $VAGRANTHOME/files/etcd.service > /etc/systemd/system/etcd.service
+  sudo sed "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/etcd.service > /etc/systemd/system/etcd.service
   sudo systemctl daemon-reload
   sudo systemctl enable etcd
   sudo systemctl start etcd
@@ -111,8 +122,8 @@ get_etcd() {
 
 init_master() {
   echo "################## Initializing Master"
-  sudo sed -i 's/ww.ww.ww.ww/10.0.2.15/g' $VAGRANTHOME/files/kubeadm_config.yaml 
-  sudo sed -i 's/xx.xx.xx.xx/10.0.2.15/g' $VAGRANTHOME/files/kubeadm_config.yaml 
+  sudo sed -i "s/ww.ww.ww.ww/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
+  sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
   # NEEDED ON FUTURE VERSION 1.12
   #sudo systemctl stop etcd
   #sudo rm -rf /var/lib/etcd/member
@@ -133,20 +144,13 @@ init_master() {
   rm $VAGRANTHOME/rbac-kdd.yaml
   rm $VAGRANTHOME/calico.yaml
 }
-testfile(){
-  echo "#########################################################"
-  echo "######### TEST"
-  chmod +x $VAGRANTHOME/files/test.sh
-  $VAGRANTHOME/files/test.sh
-}
 
-update
+#update
 ssl
-get_kubectl
-get_haproxy
+#get_kubectl
+#get_haproxy
 tls
-get_docker
-get_kubethings
-get_etcd
-init_master
-testfile
+#get_docker
+#get_kubethings
+#get_etcd
+#init_master
