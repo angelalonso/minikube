@@ -23,7 +23,7 @@ get_ssh() {
   echo "Getting our keys on the host"
   mkdir -p $VAGRANTHOME/.ssh
   mv $VAGRANTHOME/files/notminikube.pem $VAGRANTHOME/.ssh/id_rsa
-  cat $VAGRANTHOME/files/notminikube.pub > $VAGRANTHOME/.ssh/authorized_keys
+  cat $VAGRANTHOME/files/notminikube.pub >> $VAGRANTHOME/.ssh/authorized_keys
   su -l vagrant -c 'sudo chown -R $(id -u):$(id -g) /home/vagrant/.ssh'
   sudo mkdir -p /root/.ssh
   sudo sh -c "cat $VAGRANTHOME/files/notminikube.pub > /root/.ssh/authorized_keys"
@@ -136,39 +136,51 @@ init_master() {
   echo "################## Initializing Master"
   if [ $THISMASTER -eq 1 ] ; then
     echo "Doing Master1"
+    sudo sed -i "s/ww.ww.ww.ww/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
+    sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
+    # NEEDED ON FUTURE VERSION 1.12
+    #sudo systemctl stop etcd
+    #sudo rm -rf /var/lib/etcd/member
+    sudo kubeadm reset
+    sudo kubeadm init --config=$VAGRANTHOME/files/kubeadm_config.yaml --ignore-preflight-errors=ExternalEtcdVersion
+    #sudo scp -r /etc/kubernetes/pki sguyennet@10.10.40.91:~
+    su -l vagrant -c 'mkdir -p $HOME/.kube'
+    su -l vagrant -c 'sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config'
+    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/.kube/config'
+    echo "downloading Calico"
+    wget --quiet https://docs.projectcalico.org/v${CALICOV}/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
+    wget --quiet https://docs.projectcalico.org/v${CALICOV}/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/rbac-kdd.yaml'
+    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/calico.yaml'
+    sed -i 's#192.168.0.0/16#10.30.0.0/24#g' $VAGRANTHOME/calico.yaml
+    echo "applying Calico"
+    su -l vagrant -c 'kubectl apply -f $HOME/rbac-kdd.yaml'
+    su -l vagrant -c 'kubectl apply -f $HOME/calico.yaml'
+    rm $VAGRANTHOME/rbac-kdd.yaml
+    rm $VAGRANTHOME/calico.yaml
   elif [ $THISMASTER -eq 2 ] || [ $THISMASTER -eq 3 ] ; then
     echo "Doing Master"$THISMASTER
+    scp -o 'StrictHostKeyChecking no' -i $VAGRANTHOME/.ssh/id_rsa -r root@10.10.40.11:/etc/kubernetes/pki $VAGRANTHOME
+    rm $VAGRANTHOME/pki/apiserver.*
+    sudo mv $VAGRANTHOME/pki /etc/kubernetes/
+    mkdir -p $VAGRANTHOME/etcd
+    scp -o 'StrictHostKeyChecking no' -i $VAGRANTHOME/.ssh/id_rsa -r root@10.10.40.11:/etc/etcd/*.pem $VAGRANTHOME/etcd
+    sudo mkdir -p /etc/etcd
+    sudo mv $VAGRANTHOME/etcd/*.pem /etc/etcd
+    sudo sed -i "s/ww.ww.ww.ww/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
+    sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
+    sudo kubeadm reset
+    sudo kubeadm init --config=$VAGRANTHOME/files/kubeadm_config.yaml --ignore-preflight-errors=ExternalEtcdVersion
   fi
-  sudo sed -i "s/ww.ww.ww.ww/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
-  sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
-  # NEEDED ON FUTURE VERSION 1.12
-  #sudo systemctl stop etcd
-  #sudo rm -rf /var/lib/etcd/member
-  sudo kubeadm init --config=$VAGRANTHOME/files/kubeadm_config.yaml
-  #sudo scp -r /etc/kubernetes/pki sguyennet@10.10.40.91:~
-  su -l vagrant -c 'mkdir -p $HOME/.kube'
-  su -l vagrant -c 'sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config'
-  su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/.kube/config'
-  echo "downloading Calico"
-  wget --quiet https://docs.projectcalico.org/v${CALICOV}/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
-  wget --quiet https://docs.projectcalico.org/v${CALICOV}/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
-  su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/rbac-kdd.yaml'
-  su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/calico.yaml'
-  sed -i 's#192.168.0.0/16#10.30.0.0/24#g' $VAGRANTHOME/calico.yaml
-  echo "applying Calico"
-  su -l vagrant -c 'kubectl apply -f $HOME/rbac-kdd.yaml'
-  su -l vagrant -c 'kubectl apply -f $HOME/calico.yaml'
-  rm $VAGRANTHOME/rbac-kdd.yaml
-  rm $VAGRANTHOME/calico.yaml
 }
 
 get_ssh
-#update
+update
 ssl
-#get_kubectl
-#get_haproxy
+get_kubectl
+get_haproxy
 tls
-#get_docker
-#get_kubethings
-#get_etcd
-#init_master
+get_docker
+get_kubethings
+get_etcd
+init_master
