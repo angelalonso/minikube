@@ -6,7 +6,7 @@ VAGRANTHOME="/home/vagrant"
 
 export DEBIAN_FRONTEND=noninteractive
 CLUSTERCIDR="10.30.0.0/24"
-HAPROXYIP="10.10.40.15"
+HAPROXYIP="10.0.2.15"
 THISMASTER=$(hostname | sed 's/master//g')
 MASTERIP=$(echo "10.10.40.1"$THISMASTER)
 
@@ -37,6 +37,7 @@ update() {
   sudo apt-get install -y \
   apt-transport-https \
   curl \
+  chrony \
   net-tools \
   software-properties-common \
   vim
@@ -62,11 +63,13 @@ get_kubectl() {
 }
 
 get_haproxy() {
-  echo "################## haproxy "
-  sudo apt-get install -y haproxy
-  sudo sed -i "s/ww.ww.ww.ww/$MASTERIP/g" $VAGRANTHOME/files/haproxy.cfg
-  sudo sed "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/haproxy.cfg > /etc/haproxy/haproxy.cfg
-  sudo systemctl restart haproxy
+  if [ $THISMASTER -eq 1 ] ; then
+    echo "################## haproxy "
+    sudo apt-get install -y haproxy
+    sudo sed -i "s/ww.ww.ww.ww/$MASTERIP/g" $VAGRANTHOME/files/haproxy.cfg
+    sudo sed "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/haproxy.cfg > /etc/haproxy/haproxy.cfg
+    sudo systemctl restart haproxy
+  fi
 }
 
 tls() {
@@ -80,7 +83,7 @@ tls() {
       -ca=ca.pem \
       -ca-key=ca-key.pem \
       -config=$VAGRANTHOME/files/ca-config.json \
-      -hostname=10.10.40.11,10.10.40.12,10.10.40.13,10.10.40.15,127.0.0.1,kubernetes.default \
+      -hostname=10.10.40.11,10.10.40.12,10.10.40.13,10.0.2.15,127.0.0.1,kubernetes.default \
       -profile=kubernetes $VAGRANTHOME/files/kubernetes-csr.json | \
       cfssljson -bare kubernetes
   elif [ $THISMASTER -eq 2 ] || [ $THISMASTER -eq 3 ] ; then
@@ -119,7 +122,7 @@ get_kubethings() {
 get_etcd() {
   echo "################## Etcd"
   sudo mkdir -p /etc/etcd /var/lib/etcd
-  sudo mv $VAGRANTHOME/ca.pem $VAGRANTHOME/kubernetes.pem $VAGRANTHOME/kubernetes-key.pem /etc/etcd
+  sudo cp $VAGRANTHOME/ca.pem $VAGRANTHOME/kubernetes.pem $VAGRANTHOME/kubernetes-key.pem /etc/etcd
   wget --quiet https://github.com/coreos/etcd/releases/download/v3.3.9/etcd-v3.3.9-linux-amd64.tar.gz 2>/dev/null
   sleep 1
   tar xvzf etcd-v3.3.9-linux-amd64.tar.gz
@@ -136,7 +139,7 @@ init_master() {
   echo "################## Initializing Master"
   if [ $THISMASTER -eq 1 ] ; then
     echo "Doing Master1"
-    sudo sed -i "s/ww.ww.ww.ww/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
+    sudo sed -i "s/ww.ww.ww.ww/$HAPROXYIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
     sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
     # NEEDED ON FUTURE VERSION 1.12
     #sudo systemctl stop etcd
@@ -160,27 +163,31 @@ init_master() {
     rm $VAGRANTHOME/calico.yaml
   elif [ $THISMASTER -eq 2 ] || [ $THISMASTER -eq 3 ] ; then
     echo "Doing Master"$THISMASTER
-    scp -o 'StrictHostKeyChecking no' -i $VAGRANTHOME/.ssh/id_rsa -r root@10.10.40.11:/etc/kubernetes/pki $VAGRANTHOME
-    rm $VAGRANTHOME/pki/apiserver.*
-    sudo mv $VAGRANTHOME/pki /etc/kubernetes/
-    mkdir -p $VAGRANTHOME/etcd
-    scp -o 'StrictHostKeyChecking no' -i $VAGRANTHOME/.ssh/id_rsa -r root@10.10.40.11:/etc/etcd/*.pem $VAGRANTHOME/etcd
-    sudo mkdir -p /etc/etcd
-    sudo mv $VAGRANTHOME/etcd/*.pem /etc/etcd
-    sudo sed -i "s/ww.ww.ww.ww/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
-    sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
-    sudo kubeadm reset
-    sudo kubeadm init --config=$VAGRANTHOME/files/kubeadm_config.yaml --ignore-preflight-errors=ExternalEtcdVersion
+    echo "need to:"
+    echo "- sudo kubeadm join 10.10.40.11:6443 --token 02nqcq.czkh7x1a4t74s8au --discovery-token-ca-cert-hash sha256:d3a461e1c06f43b391f51a1efdec941d0ccfe2ca31299a8900525c4bcb3a2b09 --ignore-preflight-errors=CRI"
+    echo ", then on master1:"
+    echo "- kubectl label node master3 node-role.kubernetes.io/master="
+#    scp -o 'StrictHostKeyChecking no' -i $VAGRANTHOME/.ssh/id_rsa -r root@10.10.40.11:/etc/kubernetes/pki $VAGRANTHOME
+#    rm $VAGRANTHOME/pki/apiserver.*
+#    sudo mv $VAGRANTHOME/pki /etc/kubernetes/
+#    mkdir -p $VAGRANTHOME/etcd
+#    scp -o 'StrictHostKeyChecking no' -i $VAGRANTHOME/.ssh/id_rsa -r root@10.10.40.11:/etc/etcd/*.pem $VAGRANTHOME/etcd
+#    sudo mkdir -p /etc/etcd
+#    sudo mv $VAGRANTHOME/etcd/*.pem /etc/etcd
+#    sudo sed -i "s/ww.ww.ww.ww/$HAPROXYIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
+#    sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
+#    sudo kubeadm reset
+#    sudo kubeadm init --config=$VAGRANTHOME/files/kubeadm_config.yaml --ignore-preflight-errors=ExternalEtcdVersion
   fi
 }
 
-get_ssh
-update
-ssl
-get_kubectl
-get_haproxy
-tls
-get_docker
-get_kubethings
-get_etcd
+#get_ssh
+#update
+#ssl
+#get_kubectl
+#get_haproxy
+#tls
+#get_docker
+#get_kubethings
+#get_etcd
 init_master
