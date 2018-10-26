@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #TODO:
 # remove authorized_keys from root user
-# Document README.md -> creation of keys
+# clean up inconsistency between use of root and sudo everywhere
 VAGRANTHOME="/home/vagrant"
 
 export DEBIAN_FRONTEND=noninteractive
@@ -136,32 +136,8 @@ get_etcd() {
 }
 
 init_master() {
-  echo "################## Initializing Master"
-#  if [ $THISMASTER -eq 1 ] ; then
-#    echo "Doing Master1"
-#    sudo sed -i "s/ww.ww.ww.ww/$HAPROXYIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
-#    sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
-#    # NEEDED ON FUTURE VERSION 1.12
-#    #sudo systemctl stop etcd
-#    #sudo rm -rf /var/lib/etcd/member
-#    sudo kubeadm reset
-#    sudo kubeadm init --config=$VAGRANTHOME/files/kubeadm_config.yaml --ignore-preflight-errors=ExternalEtcdVersion 
-#    su -l vagrant -c 'mkdir -p $HOME/.kube'
-#    su -l vagrant -c 'sudo rm /admin.conf $HOME/.kube/config'
-#    su -l vagrant -c 'sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config'
-#    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/.kube/config'
-#    echo "downloading Calico"
-#    wget --quiet https://docs.projectcalico.org/v${CALICOV}/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
-#    wget --quiet https://docs.projectcalico.org/v${CALICOV}/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
-#    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/rbac-kdd.yaml'
-#    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/calico.yaml'
-#    sed -i 's#192.168.0.0/16#10.30.0.0/24#g' $VAGRANTHOME/calico.yaml
-#    echo "applying Calico"
-#    su -l vagrant -c 'kubectl apply -f $HOME/rbac-kdd.yaml'
-#    su -l vagrant -c 'kubectl apply -f $HOME/calico.yaml'
-#    rm $VAGRANTHOME/rbac-kdd.yaml
-#    rm $VAGRANTHOME/calico.yaml
-#  fi
+  # We need to do this ONLY when all three nodes on ETCD are up and running.
+  #  therefore, I only call master1 and master2 when all three masters are done.
   if [ $THISMASTER -eq 3 ] ; then
     echo "## Now that ETCD is running on all three masters, I'll call kubeadm init on master1"
     echo "Doing Master1!"
@@ -171,16 +147,17 @@ init_master() {
     echo "Doing Master2!"
     ssh -o 'StrictHostKeyChecking no' -i /home/vagrant/.ssh/id_rsa root@10.10.40.12 "kubeadm reset"
     ssh -o 'StrictHostKeyChecking no' -i /home/vagrant/.ssh/id_rsa root@10.10.40.12 "$CMD --ignore-preflight-errors=CRI"
+    # We need to give the cluster some time to have the new master ready
     echo "waiting 20 secs"
     sleep 20
     ssh -o 'StrictHostKeyChecking no' -i /home/vagrant/.ssh/id_rsa vagrant@10.10.40.11 "kubectl label node master2 node-role.kubernetes.io/master="
     echo "Doing Master3!"
-    sudo kubeadm reset
+    kubeadm reset
     $CMD --ignore-preflight-errors=CRI
+    # We need to give the cluster some time to have the new master ready
     echo "waiting 20 secs"
     sleep 20 
     ssh -o 'StrictHostKeyChecking no' -i /home/vagrant/.ssh/id_rsa vagrant@10.10.40.11 "kubectl label node master3 node-role.kubernetes.io/master="
-
   fi
 }
 
