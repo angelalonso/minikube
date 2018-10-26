@@ -137,57 +137,60 @@ get_etcd() {
 
 init_master() {
   echo "################## Initializing Master"
-  if [ $THISMASTER -eq 1 ] ; then
-    echo "Doing Master1"
-    sudo sed -i "s/ww.ww.ww.ww/$HAPROXYIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
-    sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
-    # NEEDED ON FUTURE VERSION 1.12
-    #sudo systemctl stop etcd
-    #sudo rm -rf /var/lib/etcd/member
-    sudo kubeadm reset
-    sudo kubeadm init --config=$VAGRANTHOME/files/kubeadm_config.yaml --ignore-preflight-errors=ExternalEtcdVersion
-    #sudo scp -r /etc/kubernetes/pki sguyennet@10.10.40.91:~
-    su -l vagrant -c 'mkdir -p $HOME/.kube'
-    su -l vagrant -c 'sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config'
-    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/.kube/config'
-    echo "downloading Calico"
-    wget --quiet https://docs.projectcalico.org/v${CALICOV}/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
-    wget --quiet https://docs.projectcalico.org/v${CALICOV}/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
-    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/rbac-kdd.yaml'
-    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/calico.yaml'
-    sed -i 's#192.168.0.0/16#10.30.0.0/24#g' $VAGRANTHOME/calico.yaml
-    echo "applying Calico"
-    su -l vagrant -c 'kubectl apply -f $HOME/rbac-kdd.yaml'
-    su -l vagrant -c 'kubectl apply -f $HOME/calico.yaml'
-    rm $VAGRANTHOME/rbac-kdd.yaml
-    rm $VAGRANTHOME/calico.yaml
-  elif [ $THISMASTER -eq 2 ] || [ $THISMASTER -eq 3 ] ; then
-    echo "Doing Master"$THISMASTER
-    echo "need to:"
-    echo "- sudo kubeadm join 10.10.40.11:6443 --token 02nqcq.czkh7x1a4t74s8au --discovery-token-ca-cert-hash sha256:d3a461e1c06f43b391f51a1efdec941d0ccfe2ca31299a8900525c4bcb3a2b09 --ignore-preflight-errors=CRI"
-    echo ", then on master1:"
-    echo "- kubectl label node master3 node-role.kubernetes.io/master="
-#    scp -o 'StrictHostKeyChecking no' -i $VAGRANTHOME/.ssh/id_rsa -r root@10.10.40.11:/etc/kubernetes/pki $VAGRANTHOME
-#    rm $VAGRANTHOME/pki/apiserver.*
-#    sudo mv $VAGRANTHOME/pki /etc/kubernetes/
-#    mkdir -p $VAGRANTHOME/etcd
-#    scp -o 'StrictHostKeyChecking no' -i $VAGRANTHOME/.ssh/id_rsa -r root@10.10.40.11:/etc/etcd/*.pem $VAGRANTHOME/etcd
-#    sudo mkdir -p /etc/etcd
-#    sudo mv $VAGRANTHOME/etcd/*.pem /etc/etcd
+#  if [ $THISMASTER -eq 1 ] ; then
+#    echo "Doing Master1"
 #    sudo sed -i "s/ww.ww.ww.ww/$HAPROXYIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
 #    sudo sed -i "s/xx.xx.xx.xx/$MASTERIP/g" $VAGRANTHOME/files/kubeadm_config.yaml 
+#    # NEEDED ON FUTURE VERSION 1.12
+#    #sudo systemctl stop etcd
+#    #sudo rm -rf /var/lib/etcd/member
 #    sudo kubeadm reset
-#    sudo kubeadm init --config=$VAGRANTHOME/files/kubeadm_config.yaml --ignore-preflight-errors=ExternalEtcdVersion
+#    sudo kubeadm init --config=$VAGRANTHOME/files/kubeadm_config.yaml --ignore-preflight-errors=ExternalEtcdVersion 
+#    su -l vagrant -c 'mkdir -p $HOME/.kube'
+#    su -l vagrant -c 'sudo rm /admin.conf $HOME/.kube/config'
+#    su -l vagrant -c 'sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config'
+#    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/.kube/config'
+#    echo "downloading Calico"
+#    wget --quiet https://docs.projectcalico.org/v${CALICOV}/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
+#    wget --quiet https://docs.projectcalico.org/v${CALICOV}/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+#    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/rbac-kdd.yaml'
+#    su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/calico.yaml'
+#    sed -i 's#192.168.0.0/16#10.30.0.0/24#g' $VAGRANTHOME/calico.yaml
+#    echo "applying Calico"
+#    su -l vagrant -c 'kubectl apply -f $HOME/rbac-kdd.yaml'
+#    su -l vagrant -c 'kubectl apply -f $HOME/calico.yaml'
+#    rm $VAGRANTHOME/rbac-kdd.yaml
+#    rm $VAGRANTHOME/calico.yaml
+#  fi
+  if [ $THISMASTER -eq 3 ] ; then
+    echo "## Now that ETCD is running on all three masters, I'll call kubeadm init on master1"
+    echo "Doing Master1!"
+    ssh -o 'StrictHostKeyChecking no' -i /home/vagrant/.ssh/id_rsa root@10.10.40.11 "$VAGRANTHOME/files/kubeadm_calico.sh"
+    CMD=$(ssh -o 'StrictHostKeyChecking no' -i /home/vagrant/.ssh/id_rsa root@10.10.40.11 "kubeadm token create --print-join-command")
+    echo "## also will call kubeadm join on the other masters"
+    echo "Doing Master2!"
+    ssh -o 'StrictHostKeyChecking no' -i /home/vagrant/.ssh/id_rsa root@10.10.40.12 "kubeadm reset"
+    ssh -o 'StrictHostKeyChecking no' -i /home/vagrant/.ssh/id_rsa root@10.10.40.12 "$CMD --ignore-preflight-errors=CRI"
+    echo "waiting 20 secs"
+    sleep 20
+    ssh -o 'StrictHostKeyChecking no' -i /home/vagrant/.ssh/id_rsa vagrant@10.10.40.11 "kubectl label node master2 node-role.kubernetes.io/master="
+    echo "Doing Master3!"
+    sudo kubeadm reset
+    $CMD --ignore-preflight-errors=CRI
+    echo "waiting 20 secs"
+    sleep 20 
+    ssh -o 'StrictHostKeyChecking no' -i /home/vagrant/.ssh/id_rsa vagrant@10.10.40.11 "kubectl label node master3 node-role.kubernetes.io/master="
+
   fi
 }
 
-#get_ssh
-#update
-#ssl
-#get_kubectl
-#get_haproxy
-#tls
-#get_docker
-#get_kubethings
-#get_etcd
+get_ssh
+update
+ssl
+get_kubectl
+get_haproxy
+tls
+get_docker
+get_kubethings
+get_etcd
 init_master
