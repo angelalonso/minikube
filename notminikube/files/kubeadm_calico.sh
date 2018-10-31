@@ -12,7 +12,7 @@ THISMASTER=$(hostname | sed 's/master//g')
 MASTERIP=$(echo "10.10.40.1"$THISMASTER)
 
 K8SV="1.10.6"
-CALICOV="3.0"
+CALICOV="3.2"
 
 echo "Doing Master1"
 sudo sed -i "s/ww.ww.ww.ww/$HAPROXYIP/g" $VAGRANTHOME/files/kubeadm_config.yaml
@@ -32,6 +32,7 @@ wget -O /home/vagrant/calico.yaml --quiet https://docs.projectcalico.org/v${CALI
 su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/rbac-kdd.yaml'
 su -l vagrant -c 'sudo chown $(id -u):$(id -g) $HOME/calico.yaml'
 sed -i 's#192.168.0.0/16#10.30.0.0/24#g' $VAGRANTHOME/calico.yaml
+# TODO: replace IPV4 with our CLUSTERCIDR
 echo "applying Calico"
 su -l vagrant -c 'kubectl apply -f $HOME/rbac-kdd.yaml'
 su -l vagrant -c 'kubectl apply -f $HOME/calico.yaml'

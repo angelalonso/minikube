@@ -15,7 +15,7 @@ echo $MASTERIP
 echo "##############################"
 
 K8SV="1.10.6"
-CALICOV="3.0"
+CALICOV="3.2"
 
 get_ssh() {
   # You should run:
