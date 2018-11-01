@@ -16,11 +16,11 @@
 
 -- This will take ~20 minutes to finish, then all masters will be ready in about 2 minutes
 ## Check your cluster
-I am not going to tell you how to manage your cluster from the host machine (scp, aliases...). Instead, I'll assmue you do everything from master1 like:
-`vagrant ssh master1  `
-`kubectl get no  `
-`kubectl get cs  `
-`kubectl cluster-info`
+I am not going to tell you how to manage your cluster from the host machine (scp, aliases...). Instead, I'll assume you do everything from master1 like:
+`vagrant ssh master1  `  
+`kubectl get no  `  
+`kubectl get cs  `  
+`kubectl cluster-info`  
 ## Manually (sorry!) correct podCIDR for the new masters:
 `kubectl edit no master2  `
 -- Modify and add the following:
