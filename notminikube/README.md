@@ -9,27 +9,27 @@
 
 ## Bring up the cluster
 `cd files`  
-`ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f notminikube  
-mv notminikube notminikube.pem  
-cd ..  
-vagrant up  `
+`ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f notminikube  `
+`mv notminikube notminikube.pem  `
+`cd ..  `
+`vagrant up  `
 
 -- This will take ~20 minutes to finish, then all masters will be ready in about 2 minutes
 ## Check your cluster
 I am not going to tell you how to manage your cluster from the host machine (scp, aliases...). Instead, I'll assmue you do everything from master1 like:
-`vagrant ssh master1  
-kubectl get no  
-kubectl get cs  
-kubectl cluster-info`
+`vagrant ssh master1  `
+`kubectl get no  `
+`kubectl get cs  `
+`kubectl cluster-info`
 ## Manually (sorry!) correct podCIDR for the new masters:
 `kubectl edit no master2  `
 -- Modify and add the following:
-`spec:  
-  externalID: master2  
-  podCIDR: 10.30.0.0/24  
-  taints:  
-    - effect: NoSchedule  
-      key: node-role.kubernetes.io/master  `
+`spec:`  
+`  externalID: master2  `
+`  podCIDR: 10.30.0.0/24  `
+`  taints:  `
+`    - effect: NoSchedule  `
+`      key: node-role.kubernetes.io/master  `
 -- repeat for master3
 ## 
 ## TODO:
