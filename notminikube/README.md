@@ -24,12 +24,12 @@ I am not going to tell you how to manage your cluster from the host machine (scp
 ## Manually (sorry!) correct podCIDR for the new masters:
 `kubectl edit no master2  `
 -- Modify and add the following:
-`spec:`  
-`  externalID: master2  `
-`  podCIDR: 10.30.0.0/24  `
-`  taints:  `
-`    - effect: NoSchedule  `
-`      key: node-role.kubernetes.io/master  `
+`spec:`    
+`  externalID: master2  `  
+`  podCIDR: 10.30.0.0/24  `  
+`  taints:  `  
+`    - effect: NoSchedule  `  
+`      key: node-role.kubernetes.io/master  `  
 -- repeat for master3
 ## 
 ## TODO:
