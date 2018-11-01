@@ -8,8 +8,8 @@
 -- USE THIS AT YOUR OWN RISK --
 
 ## Bring up the cluster
-`cd files  
-ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f notminikube  
+`cd files`  
+`ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f notminikube  
 mv notminikube notminikube.pem  
 cd ..  
 vagrant up  `
