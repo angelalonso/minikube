@@ -6,16 +6,11 @@
 -- I NEVER HAD SECURITY ON MY MIND WHILE PUTTING THIS TOGETHER --
 
 -- USE THIS AT YOUR OWN RISK --
-
-cd files
-
+`cd files
 ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f notminikube
-
 mv notminikube notminikube.pem
-
 cd ..
-
-vagrant up
+vagrant up`
 
 -- This will take ~20 minutes to finish, then all masters will be ready in about 2 minutes
 vagrant ssh master1
