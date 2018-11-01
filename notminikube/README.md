@@ -33,6 +33,6 @@ I am not going to tell you how to manage your cluster from the host machine (scp
 -- repeat for master3
 ## 
 ## TODO:
-Automate Masters joining properly (no kubectl edit no needed)
-Mirror the cluster one gets from kops (k8s version?)
-Add different addons at a given version (calico 3.2?)
+* Automate Masters joining properly (no kubectl edit needed)
+* Mirror the cluster one gets from kops (k8s version?)
+* Add different addons at a given version (calico 3.2?)
