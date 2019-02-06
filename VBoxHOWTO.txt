@@ -1,0 +1,11 @@
+# Installation of Virtualbox on Ubuntu
+-- In case of error 
+            E0206 21:55:18.881440    6375 start.go:205] Error starting host: Error creating host: Error executing step: Creating VM.
+            : Unable to start the VM: /usr/bin/VBoxManage startvm minikube --type headless failed:
+            VBoxManage: error: The virtual machine 'minikube' has terminated unexpectedly during startup with exit code 1 (0x1)
+            VBoxManage: error: Details: code NS_ERROR_FAILURE (0x80004005), component MachineWrap, interface IMachine
+
+sudo apt-get autoremove virtualbox-dkms
+sudo apt-get install build-essential linux-headers-`uname -r` dkms virtualbox-dkms
+
+
