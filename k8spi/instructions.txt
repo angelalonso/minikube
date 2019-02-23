@@ -1,0 +1,52 @@
+download image
+burn
+create /boot/ssh
+nmap -sP 192.168.1.1/24
+
+ssh pi@00.11.22.33 - password raspberry
+sudo raspi-config
+set hostname to master-1
+set locales to de.DE, en.GB ...
+set keyboard
+set wifi country to DE
+accept and reboot
+
+ssh pi@00.11.22.33 - password raspberry
+sudo apt-get install vim
+cat >> /etc/dhcpcd.conf
+interface eth0
+static ip_address=192.168.1.46/24
+static routers=192.168.1.1
+static domain_name_servers=8.8.8.8 - CTRL-c
+sudo reboot
+
+ssh pi@00.11.22.33 - password raspberry
+curl -sSL get.docker.com | sh && \
+sudo usermod pi -aG docker && \
+newgrp docker
+sudo dphys-swapfile swapoff && \
+sudo dphys-swapfile uninstall && \
+sudo update-rc.d dphys-swapfile remove
+sudo swapon --summary
+sudo vim /boot/cmdline.txt
+add at the end of the line: cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory
+sudo reboot
+
+sudo vim /etc/apt/sources.list.d/kubernetes.list
+add: deb http://apt.kubernetes.io/ kubernetes-xenial main
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo apt-get update && sudo apt-get install -qy kubeadm
+sudo kubeadm config images pull -v3
+sudo kubeadm init --token-ttl=0 - finished with error, ran kubeadm reset and again this command
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+- the apiserver was restarting, changed /etc/kubernetes/manifests/kube-apiserver.yaml: initialDelaySeconds: 120
+mkdir /etc/kubernetes/manifests.bak
+mv /etc/kubernetes/manifests/kube-scheduler.yaml /etc/kubernetes/manifests.bak/
+mv /etc/kubernetes/manifests/kube-controller-manager.yaml /etc/kubernetes/manifests.bak/
+-> THIS DID NOT WORK - kubectl apply -f https://git.io/weave-kube-1.6
+# Reference: https://github.com/alexellis/k8s-on-raspbian/blob/master/GUIDE.md
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+sudo sysctl net.bridge.bridge-nf-call-iptables=1
+
