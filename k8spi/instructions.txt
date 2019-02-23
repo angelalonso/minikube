@@ -1,26 +1,27 @@
 download image
+## ALL
 burn
 create /boot/ssh
-nmap -sP 192.168.1.1/24
+nmap -sP 192.168.1.1/24, on this example we have 192.168.1.46
 
-ssh pi@00.11.22.33 - password raspberry
+ssh pi@192.168.1.46 - password raspberry
 sudo raspi-config
 set hostname to master-1
 set locales to de.DE, en.GB ...
-set keyboard
+set keyboard layout
 set wifi country to DE
 accept and reboot
 
-ssh pi@00.11.22.33 - password raspberry
+ssh pi@192.168.1.46 - password raspberry
 sudo apt-get install vim
 cat >> /etc/dhcpcd.conf
 interface eth0
 static ip_address=192.168.1.46/24
 static routers=192.168.1.1
-static domain_name_servers=8.8.8.8 - CTRL-c
+static domain_name_servers=8.8.8.8 - CTRL-d
 sudo reboot
 
-ssh pi@00.11.22.33 - password raspberry
+ssh pi@192.168.1.46 - password raspberry
 curl -sSL get.docker.com | sh && \
 sudo usermod pi -aG docker && \
 newgrp docker
@@ -37,6 +38,7 @@ add: deb http://apt.kubernetes.io/ kubernetes-xenial main
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 sudo apt-get update && sudo apt-get install -qy kubeadm
 sudo kubeadm config images pull -v3
+## MASTER
 sudo kubeadm init --token-ttl=0 - finished with error, ran kubeadm reset and again this command
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -49,4 +51,11 @@ mv /etc/kubernetes/manifests/kube-controller-manager.yaml /etc/kubernetes/manife
 # Reference: https://github.com/alexellis/k8s-on-raspbian/blob/master/GUIDE.md
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 sudo sysctl net.bridge.bridge-nf-call-iptables=1
+kubeadm token generate
+kubeadm token create <token> --print-join-command --ttl=0
 
+## NODE
+Raspi 1:
+docker 1.18.06
+kubernetes 1.5.06
+kubeadm tries to connect on a different port
