@@ -6,7 +6,7 @@ VAGRANTHOME="/home/vagrant"
 
 export DEBIAN_FRONTEND=noninteractive
 CLUSTERCIDR="10.30.0.0/24"
-HAPROXYIP="10.0.2.15"
+HAPROXYIP="10.10.40.11"
 THISMASTER=$(hostname | sed 's/master//g')
 MASTERIP=$(echo "10.10.40.1"$THISMASTER)
 
@@ -32,8 +32,10 @@ get_ssh() {
 update() {
   echo "################## update "
   echo "- Refresh package list"
+  # the overcomplicated apt-get upgrade comes from a grub update that messes with the noninteractive nature of this script
   sudo apt-get update && \
-  sudo apt-get -y upgrade && \
+  sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade && \
+  sudo apt-get -y upgrade 
   sudo apt-get install -y \
   apt-transport-https \
   curl \
@@ -161,13 +163,13 @@ init_master() {
   fi
 }
 
-get_ssh
-update
-ssl
-get_kubectl
-get_haproxy
-tls
-get_docker
-get_kubethings
-get_etcd
+#get_ssh
+#update
+#ssl
+#get_kubectl
+#get_haproxy
+#tls
+#get_docker
+#get_kubethings
+#get_etcd
 init_master

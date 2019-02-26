@@ -1,0 +1,11 @@
+---
+# A role with no access
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+ name: app-cr
+rules:
+- apiGroups: [""]
+  resources: [""] 
+  verbs: [""]
+---
