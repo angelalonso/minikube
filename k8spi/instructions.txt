@@ -51,6 +51,7 @@ sudo mv /etc/kubernetes/manifests/kube-controller-manager.yaml /etc/kubernetes/m
 -> once its up
 sudo mv /etc/kubernetes/manifests.bak/kube-scheduler.yaml /etc/kubernetes/manifests/
 sudo mv /etc/kubernetes/manifests.bak/kube-controller-manager.yaml /etc/kubernetes/manifests/
+kubectl label node master-1 node-role.kubernetes.io/master=
 -> THIS ALSO DID NOT WORK:
 kubectl apply -f https://docs.projectcalico.org/v3.2/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
 kubectl apply -f https://docs.projectcalico.org/v3.2/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
@@ -59,6 +60,7 @@ kubectl apply -f https://docs.projectcalico.org/v3.2/getting-started/kubernetes/
 # Reference: https://github.com/alexellis/k8s-on-raspbian/blob/master/GUIDE.md
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 sudo sysctl net.bridge.bridge-nf-call-iptables=1
+-> THIS WORKED: kubectl edit svc kubernetes, then change ports both to 6443
 
 kubeadm token generate
 kubeadm token create <token> --print-join-command --ttl=0

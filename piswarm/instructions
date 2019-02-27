@@ -1,0 +1,19 @@
+# ALL:
+- Burn the raspbian image, add /boot/ssh (out of this scope)
+- sudo apt-get update && sudo apt-get upgrade && sudo apt-get install vim
+- sudo vim /etc/hostname - change to the name you want to give it (manager-01, worker-14 ...)
+- curl -sSL https://get.docker.com | sh
+- sudo vi /etc/apt/preferences.d/docker-ce
+Package: docker-ce
+Pin: version 18.06.*
+Pin-Priority: 1000
+- sudo apt-get update
+- sudo apt-get install docker-ce
+- sudo init 6
+
+# MANAGER
+- sudo docker swarm init --advertise-addr <manager-IP>
+- copy the resulting command
+
+# WORKER
+- paste the command from the master
