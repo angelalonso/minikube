@@ -21,15 +21,21 @@ I am not going to tell you how to manage your cluster from the host machine (scp
 `kubectl get no  `  
 `kubectl get cs  `  
 `kubectl cluster-info`  
-## Manually (sorry!) correct podCIDR for the new masters:
+## Manually (sorry!) remove taints (this is a masters-only, very unproduction-ready mess I want to test):
+##   , also, if you remove the taints before making master2 and 3 join the cluster, the new ones will not include the taint
+`kubectl edit no master1  `
+-- Modify and remove the following:
+`  taints:  `
+`    - effect: NoSchedule  `
+`      key: node-role.kubernetes.io/master  `
+-- repeat for master2 and master3
+## Manually (sorry!) correct label and podCIDR for the new masters:
 `kubectl edit no master2  `
 -- Modify and add the following:
+`  labels:`
+`    node-role.kubernetes.io/master: ""`
 `spec:`    
-`  externalID: master2  `  
 `  podCIDR: 10.30.0.0/24  `  
-`  taints:  `  
-`    - effect: NoSchedule  `  
-`      key: node-role.kubernetes.io/master  `  
 -- repeat for master3
 ## 
 ## TODO:
