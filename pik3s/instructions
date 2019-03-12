@@ -18,3 +18,10 @@
 
 # NODES
 sudo k3s agent --server https://${MASTER_IP}:6443 --token ${NODE_TOKEN}
+
+# TODO:
+- Process/image that gets raspbian to a more secure status:
+  - remove pi user
+  - change ssh port
+- Port forward the API to be accesible through kubectl from outside
+  - generate tokens maybe?
