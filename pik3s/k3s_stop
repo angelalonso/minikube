@@ -1,0 +1,1 @@
+sudo kill $(pgrep k3s-server)

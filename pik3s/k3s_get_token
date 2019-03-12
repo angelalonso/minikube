@@ -1,0 +1,7 @@
+TOKEN=$(sudo cat /var/lib/rancher/k3s/server/node-token)
+MASTERIP=$(echo $SSH_CONNECTION | awk '{print $3}')
+echo 
+echo "PASTE THE FOLLOWING TO THE NEW NODE:"
+echo 
+echo "k3s agent --server https://$MASTERIP:6443 --token $TOKEN"
+echo 

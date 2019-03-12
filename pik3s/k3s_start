@@ -1,0 +1,2 @@
+sudo rm nohup.out
+sudo nohup k3s server &
