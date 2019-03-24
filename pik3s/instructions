@@ -1,18 +1,20 @@
 # ALL
+- get your server secured (change user, add ssh key, avoid ssh passwords, avoid ssh root, set ufw up...)
 - sudo apt-get update && sudo apt-get upgrade && sudo apt-get install vim
 - wget https://github.com/rancher/k3s/releases/download/v0.1.0/k3s-armhf - check version first on https://github.com/rancher/k3s/releases
 - sudo mv k3s-armhf /usr/local/bin/k3s
 - sudo chmod +x /usr/local/bin/k3s
 - vim /etc/hostname - change to master-01, node-14 ...whatever
+- vim /etc/hosts - change '127.0.1.1 xxx' to '127.0.1.1 master-01' (or node-14 ...whatever)
 - sudo vi /boot/cmdline.txt - add ' cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory' at the end
 - sudo init 6 - then log back in
 
 # MASTER 1
 
 - nohup sudo k3s server &
--  wait until it's done, then check /var/lib/rancher/k3s/server/node-token for the token
 - add to .bashrc:
   alias kk='sudo k3s kubectl'
+-  wait until it's done, then check /var/lib/rancher/k3s/server/node-token for the token
 
 # MASTER 2(?)
 
