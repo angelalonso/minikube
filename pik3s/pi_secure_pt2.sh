@@ -18,7 +18,7 @@ ssh_tweak() {
   sudo sed -i 's/#ChallengeResponseAuthentication .*/ChallengeResponseAuthentication no/g' /etc/ssh/sshd_config
   sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config
   sudo sed -i 's/UsePAM yes/UsePAM no/g' /etc/ssh/sshd_config
-  sudo systemctl restart sshd
+  sudo systemctl restart ssh
 }
 
 #  generic function to ask for user interaction
