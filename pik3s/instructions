@@ -1,6 +1,7 @@
 # ALL
-- get your server secured (change user, add ssh key, avoid ssh passwords, avoid ssh root, set ufw up...)
-- sudo apt-get update && sudo apt-get upgrade && sudo apt-get install vim
+- Get your server secured (change user, add ssh key, avoid ssh passwords, avoid ssh root, set ufw up...)
+  - Just run pi_secure_pt1.sh and pi_secure_pt2.sh, following instructions.
+
 - wget https://github.com/rancher/k3s/releases/download/v0.1.0/k3s-armhf - check version first on https://github.com/rancher/k3s/releases
 - sudo mv k3s-armhf /usr/local/bin/k3s
 - sudo chmod +x /usr/local/bin/k3s

@@ -4,7 +4,7 @@
 #  update, upgrade, install tools
 update_system() {
   sudo apt-get update && sudo apt-get upgrade
-  sudo apt-get install vim git
+  sudo apt-get install vim git raspberrypi-kernel-headers
 }
 #  create new user, give it admin access, add public key
 add_user() {
@@ -34,9 +34,9 @@ add_user() {
   #sudo vigr
   sudo sed -i.orig 's/:pi/:pi,'$USER'/g' /etc/group
   sudo chown -R $USER. /home/$USER
-  echo "Next you have to LOGOUT and LOGIN again with the user $USER"
+  echo "Next we will REBOOT your Raspi. Wait for a minute and try to login again with $USER"
   promptValue "Press Enter to continue"
-  logoout
+  sudo init 6
 }
 
 #  generic function to ask for user interaction

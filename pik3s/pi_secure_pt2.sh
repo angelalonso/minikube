@@ -4,6 +4,7 @@
 # remove the default pi user
 remove_pi_user() {
   sudo userdel pi
+  sudo rm -rf /home/pi
 }
 #  change SSH Port
 #  avoid SSH as root
@@ -21,6 +22,15 @@ ssh_tweak() {
   sudo systemctl restart ssh
 }
 
+ufw_config() {
+  sudo apt-get update
+  sudo apt-get install ufw raspberrypi-kernel-headers
+  sudo ufw default deny incoming
+  sudo ufw default allow outgoing
+  sudo ufw allow $SSHPORT
+  sudo ufw enable
+}
+
 #  generic function to ask for user interaction
 promptValue() {
  read -p "$1"": " val
@@ -30,3 +40,4 @@ promptValue() {
 
 remove_pi_user
 ssh_tweak
+ufw_config
