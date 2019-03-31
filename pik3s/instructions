@@ -1,12 +1,12 @@
 # ALL
-- Get your server secured (change user, add ssh key, avoid ssh passwords, avoid ssh root, set ufw up...)
-  - Just run pi_secure_pt1.sh and pi_secure_pt2.sh, following instructions.
-  - We'll assume you have ufw installed and only your SSH ports are opened on the raspis
+-  Get your server secured (change user, add ssh key, avoid ssh passwords, avoid ssh root, set ufw up...)
+  -  Just run pi_secure_pt1.sh and pi_secure_pt2.sh, following instructions.
+  -  We'll assume you have ufw installed and only your SSH ports are opened on the raspis
 
 - wget https://github.com/rancher/k3s/releases/download/v0.1.0/k3s-armhf - check version first on https://github.com/rancher/k3s/releases
 - sudo mv k3s-armhf /usr/local/bin/k3s
 - sudo chmod +x /usr/local/bin/k3s
-- sod vim /etc/hostname - change to master-01, node-14 ...whatever
+- sudo vim /etc/hostname - change to master-01, node-14 ...whatever
 - sudo vim /etc/hosts - change '127.0.1.1 xxx' to '127.0.1.1 master-01' (or node-14 ...whatever)
 - sudo vim /boot/cmdline.txt - add ' cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory' at the end
 - sudo init 6 - then log back in
@@ -14,7 +14,12 @@
 # MASTER 1
 
 - nohup k3s server &
-- add to .bashrc:
+-  make sure it runs on startup too
+  - copy over k3s_master_up.sh from this folder to /home/aafmin/ and adapt the values
+sudo crontab -e
+-  add:
+  @reboot sh /home/aafmin/k3s_master_up.sh
+-  add to .bashrc:
   alias kk='sudo k3s kubectl'
 -  wait until it's done, then check /var/lib/rancher/k3s/server/node-token for the token
 - sudo ufw allow 6443
@@ -23,6 +28,11 @@
 
 # NODES
 nohup sudo k3s agent --server https://${MASTER_IP}:6443 --token ${NODE_TOKEN} &
+-  make sure it runs on startup too
+  - copy over k3s_node_up.sh from this folder to /home/aafmin/
+sudo crontab -e
+-  add:
+  @reboot sh /home/aafmin/k3s_node_up.sh
 
 # TODO:
 - Port forward the API to be accesible through kubectl from outside
