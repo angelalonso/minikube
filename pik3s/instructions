@@ -23,6 +23,8 @@ sudo crontab -e
   alias kk='sudo k3s kubectl'
 -  wait until it's done, then check /var/lib/rancher/k3s/server/node-token for the token
 - sudo ufw allow 6443
+-  copy the content of /etc/rancher/k3s/k3s.yaml to your laptop(as you would do for any kubeconfig), changing localhost for the master's LAN IP
+  - Now you can call it from outside the master as long as port 6443 is reachable. You might want to set up an alias to the kubeconfig you just created
 
 # MASTER 2(?)
 
