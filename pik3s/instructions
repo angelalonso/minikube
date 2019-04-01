@@ -18,6 +18,8 @@
 - nohup k3s server &
 -  make sure it runs on startup too
   - copy over k3s_master_up.sh from this folder to /home/aafmin/ and adapt the values
+  - also:
+    sudo chmod +x /home/aafmin/k3s_master_up.sh
 sudo crontab -e
 -  add:
   @reboot sh /home/aafmin/k3s_master_up.sh
@@ -32,8 +34,11 @@ sudo crontab -e
 
 # NODES
 nohup sudo k3s agent --server https://${MASTER_IP}:6443 --token ${NODE_TOKEN} &
+-  if it gets stopped, run it first with nohup to see why it fails (maybe the password is needed?)
 -  make sure it runs on startup too
   - copy over k3s_node_up.sh from this folder to /home/aafmin/
+  - also:
+    sudo chmod +x /home/aafmin/k3s_node_up.sh
 sudo crontab -e
 -  add:
   @reboot sh /home/aafmin/k3s_node_up.sh
