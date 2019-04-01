@@ -13,6 +13,8 @@
 
 # MASTER 1
 
+- sudo ufw allow in on cni0 from 10.42.0.0/16
+  - See https://github.com/rancher/k3s/issues/24
 - nohup k3s server &
 -  make sure it runs on startup too
   - copy over k3s_master_up.sh from this folder to /home/aafmin/ and adapt the values
@@ -35,6 +37,13 @@ nohup sudo k3s agent --server https://${MASTER_IP}:6443 --token ${NODE_TOKEN} &
 sudo crontab -e
 -  add:
   @reboot sh /home/aafmin/k3s_node_up.sh
+
+# HELM
+Helm cannot be run from your laptop in this case: ARM vs AMD64 versions, so...
+
+wget https://storage.googleapis.com/kubernetes-helm/helm-v2.13.1-linux-arm.tar.gz
+
+tar xvzf helm-v2.13.1-linux-arm.tar.gz
 
 # TODO:
 - Port forward the API to be accesible through kubectl from outside
