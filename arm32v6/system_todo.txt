@@ -1,6 +1,6 @@
 Requirements:
 
-All nodes need python 3 (3.7) and golang (manual installation)
+All nodes need python 3 (3.5.3) and golang (manual installation)
 python3.7 -> https://gist.github.com/SeppPenner/6a5a30ebc8f79936fa136c524417761d
 sudo apt-get install python3-pip
 
@@ -11,7 +11,7 @@ All nodes need a manual installation of docker
 
 All images based from arm32v6:
    - https://hub.docker.com/r/arm32v6/python/
-   FROM arm32v6/python:3.7.3-alpine3.9
+   FROM arm32v6/python:3.5.3-alpine3.9
    - https://hub.docker.com/r/arm32v6/golang/
    FROM arm32v6/golang:1.12.4-alpine3.9
 
