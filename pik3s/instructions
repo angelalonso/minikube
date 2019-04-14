@@ -3,19 +3,19 @@
   -  Just run pi_secure_pt1.sh and pi_secure_pt2.sh, following instructions.
   -  We'll assume you have ufw installed and only your SSH ports are opened on the raspis
 
-- wget https://github.com/rancher/k3s/releases/download/v0.1.0/k3s-armhf - check version first on https://github.com/rancher/k3s/releases
-- sudo mv k3s-armhf /usr/local/bin/k3s
-- sudo chmod +x /usr/local/bin/k3s
-- sudo vim /etc/hostname - change to master-01, node-14 ...whatever
-- sudo vim /etc/hosts - change '127.0.1.1 xxx' to '127.0.1.1 master-01' (or node-14 ...whatever)
-- sudo vim /boot/cmdline.txt - add ' cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory' at the end
-- sudo init 6 - then log back in
+wget https://github.com/rancher/k3s/releases/download/vx.y.z/k3s-armhf # check version first on https://github.com/rancher/k3s/releases
+sudo mv k3s-armhf /usr/local/bin/k3s
+sudo chmod +x /usr/local/bin/k3s
+sudo vim /etc/hostname # change to master-01, node-14 ...whatever
+sudo vim /etc/hosts # change '127.0.1.1 xxx' to '127.0.1.1 master-01' (or node-14 ...whatever)
+sudo vim /boot/cmdline.txt # add ' cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory' at the end
+sudo init 6 - then log back in
 
 # MASTER 1
 
 - sudo ufw allow in on cni0 from 10.42.0.0/16
   - See https://github.com/rancher/k3s/issues/24
-- nohup k3s server &
+- nohup sudo k3s server &
 -  make sure it runs on startup too
   - copy over k3s_master_up.sh from this folder to /home/aafmin/ and adapt the values
   - also:
